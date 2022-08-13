@@ -1,0 +1,28 @@
+{
+  "name": "remotepy",
+  "version": "1.0.0",
+  "description": "Remotepy JS is a client to connect with RemotePy running on your backed.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bilalkhan891/remotepyjs.git"
+  },
+  "keywords": [
+    "remotepy",
+    "js",
+    "python",
+    "realtime",
+    "ws",
+    "wss",
+    "socket"
+  ],
+  "author": "Bilal Afridi, Farukh Tamboli",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bilalkhan891/remotepyjs/issues"
+  },
+  "homepage": "https://github.com/bilalkhan891/remotepyjs#readme"
+}
