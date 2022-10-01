@@ -21,16 +21,18 @@
  * THE SOFTWARE.
  *
  ********************************************************************************/
-var ARGUMENT_NAMES = /([^\s,]+)/g;
-var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm;
-function getParamNames(func) {
-  var fnStr = func.toString().replace(STRIP_COMMENTS, '');
-  var result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
-  if (result === null) result = [];
-  return result;
-}
 
 function JS2PyClient(serverName, clientPageId) {
+  let ARGUMENT_NAMES = /([^\s,]+)/g;
+  let STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm;
+  this.getParamNames = function (func) {
+    console.log('argument names', ARGUMENT_NAMES);
+    console.log('strip comments', STRIP_COMMENTS);
+    let fnStr = func.toString().replace(STRIP_COMMENTS, '');
+    let result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES);
+    if (result === null) result = [];
+    return result;
+  };
   if (serverName === undefined) this.serverName = 'ws://localhost:8082';
   else this.serverName = serverName;
   if (clientPageId === undefined) this.clientPageId = 'Undefined';
@@ -207,18 +209,20 @@ function JS2PyClient(serverName, clientPageId) {
     reader.readAsArrayBuffer(src);
   };
 
-  this.createJSProxyFunctions = function (namespace) {
+  this.createJSProxyFunctions = namespace => {
     for (var functionName in this.PythonFunctionsArgs) {
       // this.PythonFunctions
       var args = this.PythonFunctionsArgs[functionName];
       args.push('...func');
       var funcBody =
-        'var paramNames = getParamNames(JS2PySelf.PythonFunctions.' +
-        functionName +
-        "); var args = Array.prototype.slice.call(arguments); var inputObject = {}; for(var i in paramNames) { var paramName = paramNames[i]; if(paramName != '...func') { inputObject[paramName] = args[i];} } return JS2PySelf.callMultipleCallbackPythonFunction('" +
+        "console.log('this:', this);" +
+        'var paramNames = this.getParamNames(this.' +
+        functionName.split('.')[1] +
+        "); var args = Array.prototype.slice.call(arguments); var inputObject = {}; for(var i in paramNames) { var paramName = paramNames[i]; if(paramName != '...func') { inputObject[paramName] = args[i];} } return this.callMultipleCallbackPythonFunction('" +
         functionName +
         "', inputObject, ...func);";
       //var funcBody = 'return \'test\';';
+      // debugger;
       args.push(funcBody);
       JS2PySelf = this;
       // window[functionName] = Function.apply(null, args);
@@ -234,7 +238,7 @@ function JS2PyClient(serverName, clientPageId) {
         }
 
         namespace_object[function_namespace_components[function_namespace_components.length - 1]] =
-          Function.apply(null, args);
+          Function.apply(this, args);
 
         /*
                 for(var i = function_namespace_components.length - 1; i >= 1; i--) {
@@ -250,7 +254,7 @@ function JS2PyClient(serverName, clientPageId) {
         // so this.PythonFunctions.test.search_markets will correctly resolve to
         // Function.apply(null, args) which is the anonymous function handler
       } else {
-        this.PythonFunctions[functionName] = Function.apply(null, args);
+        this.PythonFunctions[functionName] = Function.apply(this, args);
       }
       //window[functionName].bind(JS2PySelf);
     }
@@ -305,6 +309,7 @@ function JS2PyClient(serverName, clientPageId) {
             }
             JS2PySelf.createJSProxyFunctions('');
             //JS2PySelf.createJS2PyProxyFunctions('');
+            // debugger;
             JS2PySelf.onopen();
           },
         );
@@ -326,7 +331,7 @@ function JS2PyClient(serverName, clientPageId) {
       }
       if (typeof e.data == 'string') {
         console.log('Message received: ' + e.data);
-        debugger;
+        // debugger;
         var funcReturn = JSON.parse(e.data);
         if ('args' in funcReturn) {
           var pos = JS2PySelf.jsFunctionDict
